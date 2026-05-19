@@ -8,14 +8,13 @@ import "../App.css";
 function Dashboard() {
   const [rates, setRates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [shopId, setShopId] = useState(null);
   const [updating, setUpdating] = useState(false);
+  const [shopId, setShopId] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
   async function loadData() {
     try {
       setLoading(true);
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setErrorMessage("⚠️ لا يوجد مستخدم مسجل دخول.");
@@ -28,13 +27,7 @@ function Dashboard() {
         .eq("id", user.id)
         .maybeSingle();
 
-      if (profileError) {
-        console.error("❌ Profile query error:", profileError);
-        setErrorMessage("⚠️ حدث خطأ أثناء جلب بيانات المستخدم.");
-        return;
-      }
-
-      if (!profile || !profile.shop_id) {
+      if (profileError || !profile?.shop_id) {
         setErrorMessage("⚠️ لم يتم العثور على بيانات المحل.");
         return;
       }
@@ -48,37 +41,50 @@ function Dashboard() {
         .order("currency");
 
       if (ratesError) throw ratesError;
-
       setRates(ratesData);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       setErrorMessage("⚠️ حدث خطأ أثناء تحميل البيانات.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function updateRate(currency, buy, sell) {
+  // تحديث جميع الأسعار
+  async function updateAllRates() {
+    if (!shopId || rates.length === 0) {
+      toast.error("لا توجد بيانات للتحديث");
+      return;
+    }
+
     try {
       setUpdating(true);
 
-      const { error } = await supabase
-        .from("exchange_rates")
-        .update({
-          buy_price: buy,
-          sell_price: sell,
-          updated_at: new Date(),
-        })
-        .eq("shop_id", shopId)
-        .eq("currency", currency);
+      const promises = rates.map((item) =>
+        supabase
+          .from("exchange_rates")
+          .update({
+            buy_price: Number(item.buy_price) || 0,
+            sell_price: Number(item.sell_price) || 0,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("shop_id", shopId)
+          .eq("currency", item.currency)
+      );
 
-      if (error) throw error;
+      const results = await Promise.all(promises);
 
-      toast.success("تم التحديث بنجاح ✨");
+      const hasError = results.some((result) => result.error);
 
+      if (hasError) {
+        console.error("Update errors:", results);
+        throw new Error("فشل تحديث بعض العملات");
+      }
+
+      toast.success("✅ تم تحديث جميع الأسعار بنجاح");
     } catch (err) {
-      console.log(err);
-      toast.error("فشل التحديث ❌");
+      console.error("Update All Error:", err);
+      toast.error("❌ فشل التحديث - تحقق من Console");
     } finally {
       setUpdating(false);
     }
@@ -88,6 +94,7 @@ function Dashboard() {
     loadData();
   }, []);
 
+  // Real-time subscription
   useEffect(() => {
     if (!shopId) return;
 
@@ -134,7 +141,6 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white p-10 relative overflow-hidden animate-fadeIn">
-
       {/* خلفيات متوهجة */}
       <div className="absolute inset-0">
         <div className="absolute top-[-200px] left-[-200px] w-[600px] h-[600px] bg-[#D4AF37]/15 rounded-full blur-3xl"></div>
@@ -142,37 +148,31 @@ function Dashboard() {
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto bg-white/5 backdrop-blur-xl border border-[#D4AF37]/30 rounded-3xl p-10 shadow-2xl">
+        {/* الهيدر */}
+        <div className="flex items-center justify-between mb-10">
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95"
+          >
+            تسجيل الخروج
+          </button>
 
-       {/* الهيدر */}
-<div className="flex items-center justify-between mb-10">
+          <h1 className="text-4xl font-bold text-[#D4AF37] tracking-wider text-center flex-1">
+            شركة الشهم للصرافة والحوالات المالية
+          </h1>
 
-  {/* زر تسجيل الخروج */}
-  <button
-    onClick={async () => {
-      await supabase.auth.signOut();
-      window.location.href = "/login";
-    }}
-    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95"
-  >
-    تسجيل الخروج
-  </button>
-
-  {/* اسم الشركة */}
-  <h1 className="text-4xl font-bold text-[#D4AF37] tracking-wider text-center flex-1">
-شركة الشهم للصرافة والحوالات المالية
-  </h1>
-
-  {/* اللوغو */}
-  <div className="flex items-center gap-3">
-    <img
-      src={logo}
-      alt="Logo"
-      onClick={() => window.location.href = "/display"}
-      className="w-28 h-28 rounded-full shadow-2xl ring-2 ring-[#D4AF37]/40 object-cover cursor-pointer hover:scale-110 transition-transform duration-300"
-    />
-  </div>
-
-</div>
+          <div className="flex items-center gap-3">
+            <img
+              src={logo}
+              alt="Logo"
+              onClick={() => window.location.href = "/display"}
+              className="w-28 h-28 rounded-full shadow-2xl ring-2 ring-[#D4AF37]/40 object-cover cursor-pointer hover:scale-110 transition-transform duration-300"
+            />
+          </div>
+        </div>
 
         {/* الجدول */}
         <table className="w-full text-left border-separate border-spacing-y-4 text-xl">
@@ -180,13 +180,11 @@ function Dashboard() {
             <tr className="text-[#D4AF37] bg-white/10 backdrop-blur-xl rounded-xl text-2xl">
               <th className="py-5 px-8 rounded-l-xl">العملة</th>
               <th className="py-5 px-8">سعر الشراء</th>
-              <th className="py-5 px-8">سعر المبيع</th>
-              <th className="py-5 px-8 text-center rounded-r-xl">الإجراء</th>
+              <th className="py-5 px-8 rounded-r-xl">سعر المبيع</th>
             </tr>
           </thead>
-
           <tbody>
-            {rates.map((item) => (
+            {rates.map((item, index) => (
               <tr
                 key={item.currency}
                 className="bg-white/5 hover:bg-white/10 transition-all duration-300 rounded-xl"
@@ -199,44 +197,72 @@ function Dashboard() {
                       width: "2.6em",
                       height: "2.6em",
                       borderRadius: "6px",
-                      boxShadow: "0 0 8px rgba(0,0,0,0.4)"
+                      boxShadow: "0 0 8px rgba(0,0,0,0.4)",
                     }}
                   />
                   <span>{item.currency}</span>
                 </td>
-
                 <td className="px-8">
                   <input
                     type="number"
-                    defaultValue={item.buy_price}
-                    onChange={(e) => (item.buy_price = e.target.value)}
+                    value={item.buy_price ?? ""}
+                    onChange={(e) => {
+                      const newRates = [...rates];
+                      newRates[index].buy_price = parseFloat(e.target.value) || 0;
+                      setRates(newRates);
+                    }}
                     className="bg-black/40 border border-[#D4AF37]/40 rounded-xl px-5 py-4 w-40 text-white focus:ring-2 focus:ring-[#D4AF37] text-center text-xl transition-all"
                   />
                 </td>
-
                 <td className="px-8">
                   <input
                     type="number"
-                    defaultValue={item.sell_price}
-                    onChange={(e) => (item.sell_price = e.target.value)}
+                    value={item.sell_price ?? ""}
+                    onChange={(e) => {
+                      const newRates = [...rates];
+                      newRates[index].sell_price = parseFloat(e.target.value) || 0;
+                      setRates(newRates);
+                    }}
                     className="bg-black/40 border border-[#D4AF37]/40 rounded-xl px-5 py-4 w-40 text-white focus:ring-2 focus:ring-[#D4AF37] text-center text-xl transition-all"
                   />
-                </td>
-
-                <td className="text-center px-8">
-                  <button
-                    onClick={() => updateRate(item.currency, item.buy_price, item.sell_price)}
-                    disabled={updating}
-                    className="px-10 py-4 bg-[#D4AF37] text-black font-bold rounded-xl hover:bg-[#E8B923] hover:scale-105 active:scale-95 transition-all duration-300 shadow-md text-xl disabled:opacity-50"
-                  >
-                    {updating ? "جاري الحفظ..." : "تحديث"}
-                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
 
+                           {/* زر التحديث الجماعي - تصميم فاخر مصغر */}
+        <div className="flex justify-center mt-12">
+          <button
+            onClick={updateAllRates}
+            disabled={updating}
+            className="group relative px-14 py-5 bg-gradient-to-r from-[#D4AF37] via-[#E8C24F] to-[#D4AF37] 
+                       hover:from-[#E8C24F] hover:via-[#F4D97A] hover:to-[#E8C24F]
+                       text-black font-bold text-2xl rounded-3xl
+                       shadow-[0_4px_15px_rgba(212,175,55,0.25)] 
+                       hover:shadow-[0_8px_25px_rgba(212,175,55,0.3)]
+                       transition-all duration-300 active:scale-95
+                       disabled:opacity-70 flex items-center gap-3
+                       border border-[#F4D97A]/30 hover:border-[#F4D97A]/50"
+          >
+            {/* أيقونة صح أخضر */}
+            <span className="text-4xl transition-transform group-hover:rotate-45 duration-300">
+              ✅
+            </span>
+            
+            {updating ? (
+              <span className="flex items-center gap-3">
+                <span className="animate-spin inline-block">⟳</span>
+                جاري التحديث...
+              </span>
+            ) : (
+           "تحديث الأسعار"
+            )}
+
+            {/* تأثير لمعان داخلي خفيف جداً */}
+            <div className="absolute inset-0 bg-white/10 rounded-3xl opacity-0 group-hover:opacity-15 transition-opacity pointer-events-none"></div>
+          </button>
+        </div>
       </div>
     </div>
   );

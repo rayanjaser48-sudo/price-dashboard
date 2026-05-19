@@ -158,7 +158,8 @@ function Display() {
   </div>
 </div>
 
-          {/* اسم الشركة */}
+
+{/* اسم الشركة */}
           <div className="flex-1 text-center px-4">
             <h1 className="text-4xl font-bold text-[#D4AF37] tracking-wider">
             شركة الشهم للصرافة والحوالات المالية
