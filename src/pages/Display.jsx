@@ -50,23 +50,17 @@ function Display() {
     const channel = supabase
       .channel(`display_rates_${shopId}`)
       .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "exchange_rates",
-          filter: `shop_id=eq.${shopId}`,
-        },
-        (payload) => {
-          setRates((prev) =>
-            prev.map((item) =>
-              item.currency === payload.new.currency
-                ? { ...item, ...payload.new }
-                : item
-            )
-          );
-        }
-      )
+  "postgres_changes",
+  {
+    event: "*",
+    schema: "public",
+    table: "exchange_rates",
+    filter: `shop_id=eq.${shopId}`,
+  },
+  () => {
+    loadData(); // 🔥 هي الحل الذهبي
+  }
+)
       .subscribe();
 
     return () => supabase.removeChannel(channel);
