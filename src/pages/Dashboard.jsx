@@ -143,35 +143,36 @@ function Dashboard() {
 
       <div className="relative z-10 max-w-5xl mx-auto bg-white/5 backdrop-blur-xl border border-[#D4AF37]/30 rounded-3xl p-10 shadow-2xl">
 
-        {/* الهيدر */}
-        <div className="flex items-center justify-between mb-10">
+       {/* الهيدر */}
+<div className="flex items-center justify-between mb-10">
 
-          {/* اللوغو */}
-          <div className="flex items-center gap-3">
-            <img
-              src={logo}
-              alt="Logo"
-              onClick={() => window.location.href = "/display"}
-              className="w-28 h-28 rounded-full shadow-2xl ring-2 ring-[#D4AF37]/40 object-cover cursor-pointer hover:scale-110 transition-transform duration-300"
-            />
-          </div>
+  {/* زر تسجيل الخروج */}
+  <button
+    onClick={async () => {
+      await supabase.auth.signOut();
+      window.location.href = "/login";
+    }}
+    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95"
+  >
+    تسجيل الخروج
+  </button>
 
-          {/* اسم الشركة */}
-          <h1 className="text-5xl font-bold text-[#D4AF37] tracking-wider text-center flex-1">
-            شركة الشهم
-          </h1>
+  {/* اسم الشركة */}
+  <h1 className="text-4xl font-bold text-[#D4AF37] tracking-wider text-center flex-1">
+شركة الشهم للصرافة والحوالات المالية
+  </h1>
 
-          {/* زر تسجيل الخروج */}
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.href = "/login";
-            }}
-            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95"
-          >
-            تسجيل الخروج
-          </button>
-        </div>
+  {/* اللوغو */}
+  <div className="flex items-center gap-3">
+    <img
+      src={logo}
+      alt="Logo"
+      onClick={() => window.location.href = "/display"}
+      className="w-28 h-28 rounded-full shadow-2xl ring-2 ring-[#D4AF37]/40 object-cover cursor-pointer hover:scale-110 transition-transform duration-300"
+    />
+  </div>
+
+</div>
 
         {/* الجدول */}
         <table className="w-full text-left border-separate border-spacing-y-4 text-xl">

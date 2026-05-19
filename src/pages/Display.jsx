@@ -119,25 +119,25 @@ function Display() {
         {/* الهيدر */}
         <div className="flex items-center justify-between mb-6">
 
-          {/* الوقت */}
-          <div className="text-left">
-            <div className="text-3xl font-bold text-[#D4AF37]">
-              {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </div>
-            <div className="text-md text-gray-400 mt-1">
-              {time.toLocaleDateString("ar-SA", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </div>
-          </div>
+         {/* الوقت */}
+<div className="text-left">
+  <div className="text-3xl font-bold text-[#D4AF37]">
+    {time.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true, // إذا بدك 24 ساعة
+    })}
+  </div>
+
+  <div className="text-xl text-gray-400 mt-1">
+    {time.toLocaleDateString("en-GB")}
+  </div>
+</div>
 
           {/* اسم الشركة */}
           <div className="flex-1 text-center px-4">
             <h1 className="text-4xl font-bold text-[#D4AF37] tracking-wider">
-              شركة الشهم
+            شركة الشهم للصرافة والحوالات المالية
             </h1>
           </div>
 
@@ -192,12 +192,14 @@ function Display() {
                         {item.sell_price}
                       </td>
 
-                      <td className="py-4 text-gray-300 text-lg">
-                        {new Date(item.updated_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
+                     <td className="py-4 text-gray-300 text-lg">
+  {new Date(item.updated_at).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Damascus",
+  })}
+</td>
                     </tr>
                   ))}
                 </tbody>
